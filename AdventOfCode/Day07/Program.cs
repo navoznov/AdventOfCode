@@ -15,7 +15,7 @@ namespace Day07
 
         private static void Part1()
         {
-            var lines = File.ReadAllLines("input1.txt");
+            var lines = File.ReadAllLines("input.txt");
             var logicNetwork = new LogicNetwork();
             foreach (var line in lines)
             {
@@ -27,7 +27,7 @@ namespace Day07
         }
         private static void Part2()
         {
-            var lines = File.ReadAllLines("input1.txt");
+            var lines = File.ReadAllLines("input.txt");
             var logicNetwork = new LogicNetwork();
             foreach (var line in lines)
             {
