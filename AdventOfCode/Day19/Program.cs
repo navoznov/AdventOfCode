@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace Day19
 {
@@ -17,12 +16,45 @@ namespace Day19
             List<ReplacementRule> replacementRules;
             string moleculeStr;
             Parse(lines, out replacementRules, out moleculeStr);
-            
+
+            Part1(moleculeStr, replacementRules);
+            Part2(moleculeStr, replacementRules);
+        }
+
+        private static void Part1(string moleculeStr, List<ReplacementRule> replacementRules)
+        {
             var combinations = GetCombinations(moleculeStr, replacementRules);
             Console.WriteLine(combinations.Count());
         }
 
-        private static IEnumerable<string> GetCombinations(string moleculeStr, IEnumerable<ReplacementRule> replacementRules)
+        private static void Part2(string moleculeStr, List<ReplacementRule> replacementRules)
+        {
+            var reversedRules = replacementRules.Select(x => new ReplacementRule(x.Target, x.Source)).ToList();
+
+            var molecule = moleculeStr;
+            var steps = 0;
+            do
+            {
+                foreach (var rule in reversedRules)
+                {
+                    int index = 0;
+                    var moleculeLength = molecule.Length;
+                    index = molecule.IndexOf(rule.Source, index, StringComparison.Ordinal);
+                    if (index == -1)
+                    {
+                        continue;
+                    }
+                    var sb = new StringBuilder(molecule);
+                    sb.Replace(rule.Source, rule.Target, index, rule.Source.Length);
+                    molecule = sb.ToString();
+                    steps++;
+                }
+            } while (molecule != "e");
+            Console.WriteLine(steps);
+        }
+
+        private static IEnumerable<string> GetCombinations(string moleculeStr,
+            IEnumerable<ReplacementRule> replacementRules)
         {
             var result = new List<string>().AsEnumerable();
             foreach (var rule in replacementRules)
@@ -49,7 +81,7 @@ namespace Day19
                 sb.Replace(source, replacementRule.Target, index, sourceStrLength);
                 var combination = sb.ToString();
                 yield return combination;
-                index +=sourceStrLength;
+                index += sourceStrLength;
             } while (true);
         }
 
@@ -57,12 +89,6 @@ namespace Day19
         {
             replacementRules = ParseReplacementRules(lines).ToList();
             moleculeStr = lines.Last();
-        }
-
-        private static IEnumerable<string> ParseMoleculeComponents(string moleculeStr)
-        {
-            var regex = new Regex(@"([A-Z][a-z]*)+");
-            return regex.Match(moleculeStr).Groups[1].Captures.Cast<Capture>().Select(x => x.Value);
         }
 
         private static IEnumerable<ReplacementRule> ParseReplacementRules(string[] lines)
