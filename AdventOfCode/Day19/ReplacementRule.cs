@@ -1,6 +1,6 @@
 ﻿namespace Day19
 {
-    public class ReplacementRule
+    internal class ReplacementRule
     {
         private readonly string _source;
         private readonly string _target;
