@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json.Linq;
 
 namespace Day12
 {
@@ -10,7 +11,7 @@ namespace Day12
         private static void Main(string[] args)
         {
             Part1();
-            //Part2();  - недоделано
+            Part2();
         }
 
         private static void Part1()
@@ -23,91 +24,10 @@ namespace Day12
         private static void Part2()
         {
             var input = File.ReadAllText("input.txt");
+            var jObject = JObject.Parse(input);
 
-            var totalSum = GetSumOfInts(input);
-
-            int pos = 0;
-            var redSum = 0;
-            do
-            {
-                pos = input.IndexOf("red", pos + 1);
-                if (pos < 0)
-                {
-                    break;
-                }
-                int openBracePos;
-                if (!TryGetOpenBracePos(pos, input, out openBracePos))
-                {
-                    continue;
-                }
-                int closeBracePos;
-                if (!TryGetCloseBracePos(pos, input, out closeBracePos))
-                {
-                    continue;
-                }
-
-                var redBlockStr = input.Substring(openBracePos + 1, closeBracePos - openBracePos - 1);
-                redSum += GetSumOfInts(redBlockStr);
-                input = input.Substring(0, openBracePos) + input.Substring(closeBracePos + 1);
-            } while (true);
-
-            //var regex = new Regex(@"[\{][^\{]*?red[^\{]*?[\}]");
-            //var matches = regex.Matches(input).OfType<Match>().ToList();
-            //foreach (var match in matches)
-            //{
-            //    var currentRedSum = GetSumOfInts(match.Value);
-            //    redSum += currentRedSum;
-            //}
-            Console.WriteLine(totalSum - redSum);
-        }
-
-        private static bool TryGetOpenBracePos(int pos, string input, out int openBracePos)
-        {
-            openBracePos = -1;
-            var closeBraceCounter = 0;
-            for (int i = pos - 1; i >= 0; i--)
-            {
-                var currentChar = input[i];
-                if (currentChar == '[' && closeBraceCounter == 0)
-                {
-                    return false;
-                }
-                if (currentChar == '{')
-                {
-                    if (closeBraceCounter != 0)
-                    {
-                        closeBraceCounter--;
-                    }
-                    else
-                    {
-                        openBracePos = i;
-                        break;
-                    }
-                }
-                if (currentChar == '}')
-                {
-                    closeBraceCounter++;
-                }
-            }
-            return openBracePos > -1;
-        }
-
-        private static bool TryGetCloseBracePos(int pos, string input, out int closeBracePos)
-        {
-            // {"d":"red","e":[1,2,3,4],"f":5}  - 0
-            // [1,{"c":"red","b":2},3]          - 4
-            // [1,"red",{"x":1},5]              - 7
-            closeBracePos = -1;
-            var openBraceCounter = 0;
-            var openArrayBraceCounter = 0;
-
-            for (var i = pos; i < input.Length; i++)
-            {
-                var c = input[i];
-
-                // todo:
-            }
-            return closeBracePos > -1;
+            var sum = GetSumOfNonRedInts(jObject);
+            Console.WriteLine(sum);
         }
 
         private static int GetSumOfInts(string input)
@@ -116,6 +36,35 @@ namespace Day12
             var matches = regex.Matches(input).OfType<Match>().ToList();
             var sum = matches.Sum(x => int.Parse(x.Value));
             return sum;
+        }
+
+        private static long GetSumOfNonRedInts(JToken jToken)
+        {
+            var jObject = jToken as JObject;
+            if (jObject != null)
+            {
+                return !HasRed(jObject) ? jObject.Properties().Select(x => x.Value).Sum(x => GetSumOfNonRedInts(x)) : 0;
+            }
+            var jArray = jToken as JArray;
+            if (jArray != null)
+            {
+                return jArray.Sum(x => GetSumOfNonRedInts(x));
+            }
+            var jValue = jToken as JValue;
+            if (jValue != null)
+            {
+                var value = jValue.Value;
+                return value as long? ?? 0;
+            }
+            throw new InvalidOperationException();
+        }
+
+        private static bool HasRed(JObject jObject)
+        {
+            return jObject.Properties()
+                .Select(x => x.Value)
+                .OfType<JValue>()
+                .Any(x => x.Value<string>() == "red");
         }
     }
 }
